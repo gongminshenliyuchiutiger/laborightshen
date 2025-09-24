@@ -23,11 +23,26 @@
         }
         .choice-btn {
             transition: all 0.2s ease;
+            position: relative;
         }
         .choice-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
+        /* Answer feedback styles */
+        .choice-btn.correct {
+            background-color: #d1fae5; /* Green-100 */
+            border-color: #34d399; /* Green-400 */
+        }
+        .choice-btn.incorrect {
+            background-color: #fee2e2; /* Red-100 */
+            border-color: #ef4444; /* Red-400 */
+        }
+        .choice-btn.disabled {
+            pointer-events: none; /* Disable clicks */
+            opacity: 0.7;
+        }
+
         .progress-bar {
             transition: width 0.5s ease;
         }
@@ -40,6 +55,12 @@
             z-index: 1000;
             transition: all 0.3s ease;
             cursor: pointer;
+            animation: bounceIn 0.8s ease-out; /* Initial animation */
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); }
         }
         .mascot:hover {
             animation: neonGlow 0.5s ease-in-out infinite alternate, shake 0.5s ease-in-out infinite;
@@ -128,14 +149,17 @@
             </form>
         </div>
 
-        <!-- 進度條 -->
+        <!-- 進度條和測驗者資訊 -->
         <div id="progress-section" class="bg-white rounded-lg p-4 mb-6 shadow-md hidden">
             <div class="flex justify-between items-center mb-2">
                 <span class="text-sm font-medium text-gray-700">遊戲進度</span>
                 <span class="text-sm text-gray-500" id="progress-text">第 1 題 / 共 10 題</span>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-3">
+            <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
                 <div class="progress-bar bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full" id="progress-bar" style="width: 10%"></div>
+            </div>
+            <div class="mt-2 text-md font-medium text-gray-700 text-center flex items-center justify-center">
+                <i class="fas fa-user-circle mr-2 text-indigo-600"></i>目前測驗者：<span class="font-bold text-indigo-700 ml-1" id="current-player-info"></span>
             </div>
         </div>
 
@@ -228,6 +252,7 @@
         let score = 0;
         let correctAnswers = 0;
         let studentInfo = {};
+        let choiceButtons = []; // To store references to choice buttons
 
         const scenarios = [
             {
@@ -366,6 +391,10 @@
             document.getElementById('progress-section').classList.remove('hidden');
             document.getElementById('score-section').classList.remove('hidden');
             document.getElementById('scenario-card').classList.remove('hidden');
+
+            // 顯示目前測驗者資訊
+            document.getElementById('current-player-info').textContent = 
+                `${studentInfo.class}-${studentInfo.seat}-${studentInfo.name}`;
             
             showQuestion();
         });
@@ -373,12 +402,17 @@
         function showQuestion() {
             const scenario = scenarios[currentQuestion];
             
+            document.getElementById('scenario-card').style.animation = 'none'; // Reset animation
+            void document.getElementById('scenario-card').offsetWidth; // Trigger reflow
+            document.getElementById('scenario-card').style.animation = 'slideIn 0.5s ease forwards'; // Reapply animation
+
             document.getElementById('scenario-icon').className = scenario.icon + ' text-3xl mr-3 text-indigo-600';
             document.getElementById('scenario-title').textContent = scenario.title;
             document.getElementById('scenario-description').textContent = scenario.description;
             
             const choicesContainer = document.getElementById('choices-container');
             choicesContainer.innerHTML = '';
+            choiceButtons = []; // Clear previous buttons
             
             scenario.choices.forEach((choice, index) => {
                 const button = document.createElement('button');
@@ -386,6 +420,7 @@
                 button.innerHTML = `<span class="font-medium">${String.fromCharCode(65 + index)}.</span> ${choice.text}`;
                 button.onclick = () => selectAnswer(index);
                 choicesContainer.appendChild(button);
+                choiceButtons.push(button);
             });
 
             updateProgress();
@@ -395,13 +430,37 @@
             const scenario = scenarios[currentQuestion];
             const isCorrect = scenario.choices[selectedIndex].correct;
             
+            // Disable all choice buttons to prevent multiple clicks
+            choiceButtons.forEach(btn => btn.classList.add('disabled'));
+
+            // Apply feedback styling
+            choiceButtons[selectedIndex].classList.add(isCorrect ? 'correct' : 'incorrect');
+
+            if (!isCorrect) {
+                // Highlight the correct answer if the chosen one was incorrect
+                const correctAnswerIndex = scenario.choices.findIndex(choice => choice.correct);
+                if (correctAnswerIndex !== -1) {
+                    choiceButtons[correctAnswerIndex].classList.add('correct');
+                    choiceButtons[correctAnswerIndex].style.animation = 'pulse 0.5s infinite alternate'; // Subtle pulse
+                }
+            }
+            
             if (isCorrect) {
                 score += 10;
                 correctAnswers++;
             }
             
-            showResult(isCorrect, scenario.knowledge);
-            updateScore();
+            updateScore(); // Update score immediately after choice
+            
+            // Delay showing result to allow feedback animation
+            setTimeout(() => {
+                showResult(isCorrect, scenario.knowledge);
+                // Clean up feedback styles after moving to result screen
+                choiceButtons.forEach(btn => {
+                    btn.classList.remove('correct', 'incorrect', 'disabled');
+                    btn.style.animation = '';
+                });
+            }, 1000); // 1 second delay for visual feedback
         }
 
         function showResult(isCorrect, knowledge) {
@@ -413,12 +472,12 @@
             const resultMessage = document.getElementById('result-message');
             
             if (isCorrect) {
-                resultIcon.className = 'fas fa-check-circle text-6xl mb-4 text-green-500';
+                resultIcon.className = 'fas fa-check-circle text-6xl mb-4 text-green-500 animate-bounce'; // Add bounce animation
                 resultTitle.textContent = '答案正確！';
                 resultTitle.className = 'text-2xl font-bold mb-2 text-green-600';
                 resultMessage.textContent = '很好！你做出了正確的選擇！';
             } else {
-                resultIcon.className = 'fas fa-times-circle text-6xl mb-4 text-red-500';
+                resultIcon.className = 'fas fa-times-circle text-6xl mb-4 text-red-500 animate-headShake'; // Add headShake animation
                 resultTitle.textContent = '答案錯誤';
                 resultTitle.className = 'text-2xl font-bold mb-2 text-red-600';
                 resultMessage.textContent = '沒關係，讓我們學習正確的做法！';
@@ -428,6 +487,8 @@
             
             if (currentQuestion === scenarios.length - 1) {
                 document.getElementById('next-btn').innerHTML = '<i class="fas fa-flag-checkered mr-2"></i>查看結果';
+            } else {
+                 document.getElementById('next-btn').innerHTML = '<i class="fas fa-arrow-right mr-2"></i>下一題'; // Reset button text
             }
         }
 
@@ -444,6 +505,8 @@
         }
 
         function showEndScreen() {
+            document.getElementById('progress-section').classList.add('hidden'); // Hide progress bar at end
+            document.getElementById('score-section').classList.add('hidden'); // Hide score at end
             document.getElementById('result-card').classList.add('hidden');
             document.getElementById('end-screen').classList.remove('hidden');
             
@@ -455,17 +518,17 @@
             let finalMessage;
             
             if (accuracy >= 80) {
-                document.getElementById('final-icon').className = 'fas fa-trophy text-6xl text-yellow-500 mb-4';
+                document.getElementById('final-icon').className = 'fas fa-trophy text-6xl text-yellow-500 mb-4 animate-pulse';
                 document.getElementById('final-title').textContent = '勞動權益達人！';
                 finalMessage = '太棒了！你對勞動權益有很好的認識，能夠保護自己的權益！';
                 document.getElementById('download-btn').classList.remove('hidden');
             } else if (accuracy >= 60) {
-                document.getElementById('final-icon').className = 'fas fa-thumbs-up text-6xl text-blue-500 mb-4';
+                document.getElementById('final-icon').className = 'fas fa-thumbs-up text-6xl text-blue-500 mb-4 animate-bounce';
                 document.getElementById('final-title').textContent = '表現不錯！';
                 finalMessage = '你已經掌握了基本的勞動權益知識，繼續加油！';
                 document.getElementById('download-btn').classList.remove('hidden');
             } else {
-                document.getElementById('final-icon').className = 'fas fa-book text-6xl text-orange-500 mb-4';
+                document.getElementById('final-icon').className = 'fas fa-book text-6xl text-orange-500 mb-4 animate-bounce'; // Changed from wiggle to bounce
                 document.getElementById('final-title').textContent = '需要再加強！';
                 finalMessage = '建議多了解勞動法規，保護自己的權益很重要喔！';
             }
@@ -481,68 +544,106 @@
 
         function updateScore() {
             document.getElementById('score').textContent = score;
-            const accuracy = currentQuestion >= 0 ? Math.round((correctAnswers / (currentQuestion + 1)) * 100) : 0;
+            // Calculate accuracy based on answered questions
+            const currentAnsweredQuestions = currentQuestion >= 0 ? (currentQuestion + 1) : 0; 
+            const accuracy = currentAnsweredQuestions > 0 ? Math.round((correctAnswers / currentAnsweredQuestions) * 100) : 0;
             document.getElementById('accuracy').textContent = accuracy + '%';
         }
 
-        function downloadCertificate() {
+        async function downloadCertificate() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // 設定畫布大小
-            canvas.width = 800;
-            canvas.height = 600;
+            canvas.width = 1000;
+            canvas.height = 700;
+
+            // Load Font Awesome for the trophy watermark
+            // The '900' is for font-weight (Solid icons), '1em' is size, "Font Awesome 6 Free" is the font family.
+            // This ensures the canvas can draw Font Awesome icons.
+            try {
+                await document.fonts.load('900 1em "Font Awesome 6 Free"');
+            } catch (e) {
+                console.error("Failed to load Font Awesome for canvas:", e);
+                alert("無法載入 Font Awesome 字體，獎盃浮水印可能不會顯示。");
+            }
             
-            // 背景漸層
-            const gradient = ctx.createLinearGradient(0, 0, 800, 600);
-            gradient.addColorStop(0, '#667eea');
-            gradient.addColorStop(1, '#764ba2');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 800, 600);
-            
-            // 邊框
-            ctx.strokeStyle = '#FFD700';
-            ctx.lineWidth = 8;
-            ctx.strokeRect(20, 20, 760, 560);
-            
-            // 標題
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 36px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('勞權神授知識測驗認證證書', 400, 100);
-            
-            // 副標題
-            ctx.font = '20px Arial';
-            ctx.fillText('Certificate of Labor-Rights-Shen', 400, 130);
-            
-            // 學生資訊
-            ctx.font = 'bold 24px Arial';
-            ctx.fillText(`班級：${studentInfo.class}`, 400, 200);
-            ctx.fillText(`座號：${studentInfo.seat}`, 400, 240);
-            ctx.fillText(`姓名：${studentInfo.name}`, 400, 280);
-            
-            // 成績
-            const accuracy = Math.round((correctAnswers / scenarios.length) * 100);
-            ctx.font = 'bold 28px Arial';
-            ctx.fillStyle = '#FFD700';
-            ctx.fillText(`成績：${score} 分 (正確率 ${accuracy}%)`, 400, 350);
-            
-            // 認證文字
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = '18px Arial';
-            ctx.fillText('茲證明上述學生已完成勞權神授知識測驗並順利通過', 400, 420);
-            ctx.fillText('成為勞動權益神，不再只是夢想！', 400, 450);
-            
-            // 日期
-            const today = new Date();
-            const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
-            ctx.fillText(`發證日期：${dateStr}`, 400, 520);
-            
-            // 下載
-            const link = document.createElement('a');
-            link.download = `勞動權益證書_${studentInfo.name}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
+            // Step 1: 繪製證書的基本元素 (背景、邊框、標題)
+            function drawBaseCertificate() {
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 10;
+                ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; // Semi-transparent white for watermark
+                ctx.font = '900 300px "Font Awesome 6 Free"'; // Large Font Awesome trophy
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle'; // Center vertically
+                ctx.fillText('\uf091', canvas.width / 2, canvas.height / 2 + 30); // Unicode for fa-trophy, adjusted slightly
+
+                ctx.fillStyle = '#FFFFFF'; // Reset fill style for main text
+                ctx.font = 'bold 48px "Noto Sans TC", sans-serif';
+                ctx.textAlign = 'center'; // Reset text alignment
+                ctx.textBaseline = 'alphabetic'; // Reset text baseline for normal text
+                ctx.fillText('勞權神授知識測驗認證證書', canvas.width / 2, 120);
+                
+                ctx.font = '28px "Noto Sans TC", sans-serif';
+                ctx.fillText('Certificate of Labor-Rights-Shen', canvas.width / 2, 160);
+            }
+
+            // Step 2: 繪製學生資訊、成績、認證文字、校名、日期，並觸發下載
+            function finalizeDrawingAndDownload() {
+                // Student Info
+                ctx.fillStyle = '#FFFFFF'; // Reset fillStyle for text
+                ctx.font = 'bold 30px "Noto Sans TC", sans-serif';
+                ctx.fillText(`班級：${studentInfo.class}`, canvas.width / 2, 250); // Adjusted Y
+                ctx.fillText(`座號：${studentInfo.seat}`, canvas.width / 2, 290); // Adjusted Y
+                ctx.fillText(`姓名：${studentInfo.name}`, canvas.width / 2, 330); // Adjusted Y
+                
+                // Score
+                const accuracy = Math.round((correctAnswers / scenarios.length) * 100);
+                ctx.font = 'bold 36px "Noto Sans TC", sans-serif';
+                ctx.fillStyle = '#FFD700'; // Gold color for score
+                ctx.fillText(`成績：${score} 分 (正確率 ${accuracy}%)`, canvas.width / 2, 410); // Adjusted Y
+                
+                // Certification Text
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '24px "Noto Sans TC", sans-serif';
+                ctx.fillText('茲證明上述學生已完成勞權神授知識測驗並順利通過', canvas.width / 2, 480); // Adjusted Y
+                ctx.fillText('成為勞動權益神，不再只是夢想！', canvas.width / 2, 510); // Adjusted Y
+                
+                // School Name (Moved here, above date)
+                ctx.font = 'bold 26px "Noto Sans TC", sans-serif'; 
+                ctx.fillText('新北市立雙溪高級中學教師 邱俐瑜', canvas.width / 2, 590); // Adjusted Y
+                
+                // Date
+                const today = new Date();
+                const dateStr = `${today.getFullYear()}年${(today.getMonth() + 1).toString().padStart(2, '0')}月${today.getDate().toString().padStart(2, '0')}日`;
+                const fileDate = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
+                const fileTime = `${today.getHours().toString().padStart(2, '0')}${today.getMinutes().toString().padStart(2, '0')}${today.getSeconds().toString().padStart(2, '0')}`;
+                
+                ctx.font = '22px "Noto Sans TC", sans-serif';
+                ctx.fillText(`發證日期：${dateStr}`, canvas.width / 2, 630); // Adjusted Y
+
+                // Generate filename
+                const fileName = `勞權神授知識測驗證書_${studentInfo.class}-${studentInfo.seat}-${studentInfo.name}_${fileDate}${fileTime}.png`;
+
+                // Download
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+            }
+
+            // 執行第一步：繪製基本證書，包括浮水印
+            drawBaseCertificate();
+
+            // 不再繪製吉祥物，直接進行第二步的繪圖和下載
+            finalizeDrawingAndDownload();
         }
 
         function restartGame() {
@@ -559,9 +660,12 @@
             // 清空表單
             document.getElementById('student-form').reset();
             
+            // Reset state for new game
             updateScore();
             updateProgress();
+            document.getElementById('download-btn').classList.add('hidden'); // Hide download button for new game
+            document.getElementById('current-player-info').textContent = ''; // Clear player info
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'983a342535d24a64',t:'MTc1ODYzMjIwMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
