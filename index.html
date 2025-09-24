@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勞權神授知識測驗系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .scenario-card {
+            transition: all 0.3s ease;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideIn 0.5s ease forwards;
+        }
+        @keyframes slideIn {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .choice-btn {
+            transition: all 0.2s ease;
+        }
+        .choice-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        .mascot {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .mascot:hover {
+            animation: neonGlow 0.5s ease-in-out infinite alternate, shake 0.5s ease-in-out infinite;
+            transform: scale(1.1);
+        }
+        @keyframes neonGlow {
+            0% {
+                filter: drop-shadow(0 0 5px #ff0080) drop-shadow(0 0 10px #ff0080) drop-shadow(0 0 15px #ff0080);
+            }
+            25% {
+                filter: drop-shadow(0 0 5px #00ff80) drop-shadow(0 0 10px #00ff80) drop-shadow(0 0 15px #00ff80);
+            }
+            50% {
+                filter: drop-shadow(0 0 5px #8000ff) drop-shadow(0 0 10px #8000ff) drop-shadow(0 0 15px #8000ff);
+            }
+            75% {
+                filter: drop-shadow(0 0 5px #ff8000) drop-shadow(0 0 10px #ff8000) drop-shadow(0 0 15px #ff8000);
+            }
+            100% {
+                filter: drop-shadow(0 0 5px #0080ff) drop-shadow(0 0 10px #0080ff) drop-shadow(0 0 15px #0080ff);
+            }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0) scale(1.1); }
+            25% { transform: translateX(-2px) scale(1.1); }
+            75% { transform: translateX(2px) scale(1.1); }
+        }
+        .certificate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 8px solid #gold;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- 吉祥物 -->
+    <img src="image/LiyuChillGuy.svg" alt="吉祥物" class="mascot" onerror="this.style.display='none';">
+
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- 遊戲標題 -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-indigo-800 mb-2">
+                <i class="fas fa-briefcase mr-3"></i>勞權神授知識測驗系統
+            </h1>
+            <p class="text-lg text-gray-600">成為勞動權益神，不再只是夢想！</p>
+        </div>
+
+        <!-- 學生資訊輸入 -->
+        <div id="student-info-screen" class="bg-white rounded-xl p-8 shadow-lg">
+            <div class="text-center mb-6">
+                <i class="fas fa-user-graduate text-6xl text-indigo-600 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">請輸入你的資訊</h2>
+            </div>
+            
+            <form id="student-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-school mr-2"></i>班級
+                    </label>
+                    <input type="text" id="class-input" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="例如：神來一班">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-hashtag mr-2"></i>座號
+                    </label>
+                    <input type="number" id="seat-input" required min="1" max="50"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="請輸入座號">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2"></i>姓名
+                    </label>
+                    <input type="text" id="name-input" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="請輸入你的姓名">
+                </div>
+                
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200">
+                    <i class="fas fa-play mr-2"></i>開始遊戲
+                </button>
+            </form>
+        </div>
+
+        <!-- 進度條 -->
+        <div id="progress-section" class="bg-white rounded-lg p-4 mb-6 shadow-md hidden">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700">遊戲進度</span>
+                <span class="text-sm text-gray-500" id="progress-text">第 1 題 / 共 10 題</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+                <div class="progress-bar bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full" id="progress-bar" style="width: 10%"></div>
+            </div>
+        </div>
+
+        <!-- 分數顯示 -->
+        <div id="score-section" class="bg-white rounded-lg p-4 mb-6 shadow-md hidden">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <i class="fas fa-trophy text-2xl text-yellow-500 mr-2"></i>
+                    <span class="font-semibold text-gray-700">目前分數：</span>
+                    <span class="text-2xl font-bold text-indigo-600 ml-2" id="score">0</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-star text-2xl text-yellow-500 mr-2"></i>
+                    <span class="font-semibold text-gray-700">正確率：</span>
+                    <span class="text-lg font-bold text-green-600 ml-2" id="accuracy">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 遊戲內容區域 -->
+        <div id="game-container">
+            <!-- 情境卡片 -->
+            <div id="scenario-card" class="scenario-card bg-white rounded-xl p-8 shadow-lg hidden">
+                <div class="flex items-center mb-4">
+                    <i class="text-3xl mr-3 text-indigo-600" id="scenario-icon"></i>
+                    <h3 class="text-xl font-bold text-gray-800" id="scenario-title">情境標題</h3>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                    <p class="text-gray-700 leading-relaxed text-lg" id="scenario-description">情境描述</p>
+                </div>
+
+                <div class="space-y-3" id="choices-container">
+                    <!-- 選擇按鈕會動態生成 -->
+                </div>
+            </div>
+
+            <!-- 結果顯示 -->
+            <div id="result-card" class="bg-white rounded-xl p-8 shadow-lg hidden">
+                <div class="text-center mb-6">
+                    <i class="text-6xl mb-4" id="result-icon"></i>
+                    <h3 class="text-2xl font-bold mb-2" id="result-title">答案正確！</h3>
+                    <p class="text-gray-600 text-lg" id="result-message">很好的選擇！</p>
+                </div>
+
+                <div class="bg-blue-50 rounded-lg p-6 mb-6">
+                    <h4 class="font-bold text-blue-800 mb-3 flex items-center">
+                        <i class="fas fa-lightbulb mr-2"></i>知識重點
+                    </h4>
+                    <p class="text-blue-700 leading-relaxed" id="knowledge-point">知識說明</p>
+                </div>
+
+                <div class="text-center">
+                    <button onclick="nextQuestion()" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-blue-600 transform hover:scale-105 transition-all duration-200" id="next-btn">
+                        <i class="fas fa-arrow-right mr-2"></i>下一題
+                    </button>
+                </div>
+            </div>
+
+            <!-- 遊戲結束畫面 -->
+            <div id="end-screen" class="bg-white rounded-xl p-8 shadow-lg text-center hidden">
+                <i class="fas fa-trophy text-6xl text-yellow-500 mb-4" id="final-icon"></i>
+                <h2 class="text-3xl font-bold text-gray-800 mb-4" id="final-title">遊戲完成！</h2>
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-6">
+                    <p class="text-xl text-gray-700 mb-2">最終分數：<span class="font-bold text-indigo-600" id="final-score">0</span></p>
+                    <p class="text-lg text-gray-600">正確率：<span class="font-bold text-green-600" id="final-accuracy">0%</span></p>
+                </div>
+                <p class="text-gray-600 mb-6 leading-relaxed" id="final-message">評語</p>
+                
+                <div class="space-y-4">
+                    <button onclick="downloadCertificate()" id="download-btn" class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-yellow-600 hover:to-orange-600 transform hover:scale-105 transition-all duration-200 hidden">
+                        <i class="fas fa-download mr-2"></i>下載證書
+                    </button>
+                    
+                    <button onclick="restartGame()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-redo mr-2"></i>重新開始
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 版權資訊 -->
+    <footer class="text-center py-6 text-gray-500 text-sm">
+        Copyright © Liyuchiutiger Gongminshen
+    </footer>
+
+    <script>
+        let currentQuestion = 0;
+        let score = 0;
+        let correctAnswers = 0;
+        let studentInfo = {};
+
+        const scenarios = [
+            {
+                icon: "fas fa-store",
+                title: "便利商店打工",
+                description: "你在便利商店打工，老闆要求你每天工作8小時，但只給你6小時的薪水，說剩下2小時是「學習時間」不用付薪水。你應該怎麼辦？",
+                choices: [
+                    { text: "接受老闆的說法，畢竟是在學習", correct: false },
+                    { text: "向老闆說明這違反勞動法，要求給付完整薪資", correct: true },
+                    { text: "默默接受，怕被開除", correct: false },
+                    { text: "只工作6小時就離開", correct: false }
+                ],
+                knowledge: "根據勞動基準法，只要是在雇主指揮監督下提供勞務，就應該給付薪資。「學習時間」如果是強制性的工作，就應該算工作時間並給薪。"
+            },
+            {
+                icon: "fas fa-hamburger",
+                title: "速食店加班",
+                description: "你在速食店打工，某天很忙，經理要求你延長工作到晚上11點（超過原定時間3小時）。根據勞動法，你有什麼權益？",
+                choices: [
+                    { text: "加班費應該是平常時薪的1.33倍", correct: true },
+                    { text: "加班不用額外給錢，因為是工讀生", correct: false },
+                    { text: "只要給平常的時薪就好", correct: false },
+                    { text: "可以用補休代替加班費", correct: false }
+                ],
+                knowledge: "勞動基準法規定，延長工作時間在2小時內，加班費為平日每小時工資額加給1/3以上。工讀生也享有同樣的加班費保障。"
+            },
+            {
+                icon: "fas fa-coffee",
+                title: "咖啡店休息時間",
+                description: "你在咖啡店工作6小時，老闆說因為店裡忙碌，不能給你休息時間，要你連續工作6小時。這樣合法嗎？",
+                choices: [
+                    { text: "合法，工讀生沒有休息時間的權利", correct: false },
+                    { text: "不合法，工作4-6小時應有30分鐘休息", correct: true },
+                    { text: "合法，只要老闆同意就可以", correct: false },
+                    { text: "不確定，要看店裡的規定", correct: false }
+                ],
+                knowledge: "勞動基準法規定，繼續工作4小時以上，至少應有30分鐘之休息。工作8小時以上，至少應有1小時之休息。這是法定權益，不分正職或工讀。"
+            },
+            {
+                icon: "fas fa-tshirt",
+                title: "服飾店薪資發放",
+                description: "你在服飾店打工一個月，老闆說因為營業額不好，這個月薪水要延後兩週發放。你應該如何處理？",
+                choices: [
+                    { text: "理解老闆的困難，等待發薪", correct: false },
+                    { text: "要求按時發薪，這是法定義務", correct: true },
+                    { text: "同意延後，但要求加發利息", correct: false },
+                    { text: "直接離職不做了", correct: false }
+                ],
+                knowledge: "勞動基準法規定，工資應按月給付，且應於約定的期日給付。雇主不得因營業狀況不佳而延遲發薪，這是違法行為。"
+            },
+            {
+                icon: "fas fa-film",
+                title: "電影院工作安全",
+                description: "你在電影院打工，老闆要求你清理放映機房，但沒有提供任何安全防護設備，而且沒有教你正確的操作方式。你應該怎麼做？",
+                choices: [
+                    { text: "直接去做，展現積極態度", correct: false },
+                    { text: "要求提供安全訓練和防護設備", correct: true },
+                    { text: "找其他同事幫忙一起做", correct: false },
+                    { text: "拒絕做這項工作", correct: false }
+                ],
+                knowledge: "雇主有義務提供安全的工作環境、必要的安全防護設備，以及適當的安全衛生教育訓練。勞工有權要求安全的工作條件。"
+            },
+            {
+                icon: "fas fa-utensils",
+                title: "餐廳工作契約",
+                description: "你到餐廳應徵打工，老闆說不用簽勞動契約，口頭約定就好，這樣比較簡單。你認為這樣對嗎？",
+                choices: [
+                    { text: "沒關係，口頭約定比較方便", correct: false },
+                    { text: "應該要求簽訂書面勞動契約", correct: true },
+                    { text: "先做做看，有問題再說", correct: false },
+                    { text: "只要有給薪水就好", correct: false }
+                ],
+                knowledge: "勞動基準法規定，雇主應與勞工簽訂書面勞動契約，明確約定工作內容、工資、工時等條件，保障雙方權益。"
+            },
+            {
+                icon: "fas fa-shopping-cart",
+                title: "超市請假規定",
+                description: "你在超市打工，因為生病需要請假，老闆說工讀生請假要扣薪水，而且還要找人代班才能請假。這樣的規定合理嗎？",
+                choices: [
+                    { text: "合理，工讀生本來就比較沒保障", correct: false },
+                    { text: "不合理，病假不應該扣薪且不需找代班", correct: true },
+                    { text: "可以接受，畢竟會造成店裡困擾", correct: false },
+                    { text: "看情況，如果真的很忙就算了", correct: false }
+                ],
+                knowledge: "勞工因普通傷病必須治療或休養者，得請普通傷病假，一年內未超過30日部分，工資折半發給。且請假是勞工權利，不需要找代班人員。"
+            },
+            {
+                icon: "fas fa-ice-cream",
+                title: "冰品店工時限制",
+                description: "你是高中生，在冰品店打工。老闆要求你在學校上課日晚上工作到12點，週末工作10小時。這樣的安排合法嗎？",
+                choices: [
+                    { text: "合法，只要我同意就可以", correct: false },
+                    { text: "不合法，未成年工有特殊工時限制", correct: true },
+                    { text: "合法，週末可以工作比較久", correct: false },
+                    { text: "不確定，要看勞動契約怎麼寫", correct: false }
+                ],
+                knowledge: "未滿18歲之人為童工，不得於午後8時至翌晨6時之時間內工作。15歲以上未滿16歲受僱從事工作者，不得超過8小時，例假日不得工作。"
+            },
+            {
+                icon: "fas fa-gamepad",
+                title: "電玩店職災處理",
+                description: "你在電玩店打工時，因為地板濕滑不慎跌倒受傷，需要就醫治療。老闆說這是你自己不小心，醫藥費要自己負擔。你應該怎麼辦？",
+                choices: [
+                    { text: "認了，確實是自己不小心", correct: false },
+                    { text: "要求雇主負擔醫療費用，這是職業災害", correct: true },
+                    { text: "先自己付，之後再跟老闆討論", correct: false },
+                    { text: "找保險公司理賠就好", correct: false }
+                ],
+                knowledge: "勞工因執行職務而致傷病者，雇主應補償其必需之醫療費用。職業災害勞工醫療期間，雇主應按其原領工資數額予以補償。"
+            },
+            {
+                icon: "fas fa-book",
+                title: "書店離職程序",
+                description: "你在書店打工想要離職，老闆說要提前一個月告知，而且要扣押一個月薪水當作違約金。這樣的要求合理嗎？",
+                choices: [
+                    { text: "合理，這是一般的離職規定", correct: false },
+                    { text: "不合理，不定期契約只需提前10日告知", correct: true },
+                    { text: "可以接受，避免造成老闆困擾", correct: false },
+                    { text: "要看當初簽的契約內容", correct: false }
+                ],
+                knowledge: "不定期契約，勞工終止契約時，應於10日前預告雇主。雇主不得預扣勞工工資作為違約金或賠償費用。"
+            }
+        ];
+
+        // 學生資訊表單提交
+        document.getElementById('student-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            studentInfo = {
+                class: document.getElementById('class-input').value,
+                seat: document.getElementById('seat-input').value,
+                name: document.getElementById('name-input').value
+            };
+            
+            document.getElementById('student-info-screen').classList.add('hidden');
+            document.getElementById('progress-section').classList.remove('hidden');
+            document.getElementById('score-section').classList.remove('hidden');
+            document.getElementById('scenario-card').classList.remove('hidden');
+            
+            showQuestion();
+        });
+
+        function showQuestion() {
+            const scenario = scenarios[currentQuestion];
+            
+            document.getElementById('scenario-icon').className = scenario.icon + ' text-3xl mr-3 text-indigo-600';
+            document.getElementById('scenario-title').textContent = scenario.title;
+            document.getElementById('scenario-description').textContent = scenario.description;
+            
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = '';
+            
+            scenario.choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice-btn w-full text-left p-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200';
+                button.innerHTML = `<span class="font-medium">${String.fromCharCode(65 + index)}.</span> ${choice.text}`;
+                button.onclick = () => selectAnswer(index);
+                choicesContainer.appendChild(button);
+            });
+
+            updateProgress();
+        }
+
+        function selectAnswer(selectedIndex) {
+            const scenario = scenarios[currentQuestion];
+            const isCorrect = scenario.choices[selectedIndex].correct;
+            
+            if (isCorrect) {
+                score += 10;
+                correctAnswers++;
+            }
+            
+            showResult(isCorrect, scenario.knowledge);
+            updateScore();
+        }
+
+        function showResult(isCorrect, knowledge) {
+            document.getElementById('scenario-card').classList.add('hidden');
+            document.getElementById('result-card').classList.remove('hidden');
+            
+            const resultIcon = document.getElementById('result-icon');
+            const resultTitle = document.getElementById('result-title');
+            const resultMessage = document.getElementById('result-message');
+            
+            if (isCorrect) {
+                resultIcon.className = 'fas fa-check-circle text-6xl mb-4 text-green-500';
+                resultTitle.textContent = '答案正確！';
+                resultTitle.className = 'text-2xl font-bold mb-2 text-green-600';
+                resultMessage.textContent = '很好！你做出了正確的選擇！';
+            } else {
+                resultIcon.className = 'fas fa-times-circle text-6xl mb-4 text-red-500';
+                resultTitle.textContent = '答案錯誤';
+                resultTitle.className = 'text-2xl font-bold mb-2 text-red-600';
+                resultMessage.textContent = '沒關係，讓我們學習正確的做法！';
+            }
+            
+            document.getElementById('knowledge-point').textContent = knowledge;
+            
+            if (currentQuestion === scenarios.length - 1) {
+                document.getElementById('next-btn').innerHTML = '<i class="fas fa-flag-checkered mr-2"></i>查看結果';
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            
+            if (currentQuestion >= scenarios.length) {
+                showEndScreen();
+            } else {
+                document.getElementById('result-card').classList.add('hidden');
+                document.getElementById('scenario-card').classList.remove('hidden');
+                showQuestion();
+            }
+        }
+
+        function showEndScreen() {
+            document.getElementById('result-card').classList.add('hidden');
+            document.getElementById('end-screen').classList.remove('hidden');
+            
+            const accuracy = Math.round((correctAnswers / scenarios.length) * 100);
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-accuracy').textContent = accuracy + '%';
+            
+            let finalMessage;
+            
+            if (accuracy >= 80) {
+                document.getElementById('final-icon').className = 'fas fa-trophy text-6xl text-yellow-500 mb-4';
+                document.getElementById('final-title').textContent = '勞動權益達人！';
+                finalMessage = '太棒了！你對勞動權益有很好的認識，能夠保護自己的權益！';
+                document.getElementById('download-btn').classList.remove('hidden');
+            } else if (accuracy >= 60) {
+                document.getElementById('final-icon').className = 'fas fa-thumbs-up text-6xl text-blue-500 mb-4';
+                document.getElementById('final-title').textContent = '表現不錯！';
+                finalMessage = '你已經掌握了基本的勞動權益知識，繼續加油！';
+                document.getElementById('download-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('final-icon').className = 'fas fa-book text-6xl text-orange-500 mb-4';
+                document.getElementById('final-title').textContent = '需要再加強！';
+                finalMessage = '建議多了解勞動法規，保護自己的權益很重要喔！';
+            }
+            
+            document.getElementById('final-message').textContent = finalMessage;
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / scenarios.length) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = `第 ${currentQuestion + 1} 題 / 共 ${scenarios.length} 題`;
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            const accuracy = currentQuestion >= 0 ? Math.round((correctAnswers / (currentQuestion + 1)) * 100) : 0;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+        }
+
+        function downloadCertificate() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 設定畫布大小
+            canvas.width = 800;
+            canvas.height = 600;
+            
+            // 背景漸層
+            const gradient = ctx.createLinearGradient(0, 0, 800, 600);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 800, 600);
+            
+            // 邊框
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(20, 20, 760, 560);
+            
+            // 標題
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 36px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('勞權神授知識測驗認證證書', 400, 100);
+            
+            // 副標題
+            ctx.font = '20px Arial';
+            ctx.fillText('Certificate of Labor-Rights-Shen', 400, 130);
+            
+            // 學生資訊
+            ctx.font = 'bold 24px Arial';
+            ctx.fillText(`班級：${studentInfo.class}`, 400, 200);
+            ctx.fillText(`座號：${studentInfo.seat}`, 400, 240);
+            ctx.fillText(`姓名：${studentInfo.name}`, 400, 280);
+            
+            // 成績
+            const accuracy = Math.round((correctAnswers / scenarios.length) * 100);
+            ctx.font = 'bold 28px Arial';
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText(`成績：${score} 分 (正確率 ${accuracy}%)`, 400, 350);
+            
+            // 認證文字
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '18px Arial';
+            ctx.fillText('茲證明上述學生已完成勞權神授知識測驗並順利通過', 400, 420);
+            ctx.fillText('成為勞動權益神，不再只是夢想！', 400, 450);
+            
+            // 日期
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+            ctx.fillText(`發證日期：${dateStr}`, 400, 520);
+            
+            // 下載
+            const link = document.createElement('a');
+            link.download = `勞動權益證書_${studentInfo.name}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function restartGame() {
+            currentQuestion = 0;
+            score = 0;
+            correctAnswers = 0;
+            studentInfo = {};
+            
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById('progress-section').classList.add('hidden');
+            document.getElementById('score-section').classList.add('hidden');
+            document.getElementById('student-info-screen').classList.remove('hidden');
+            
+            // 清空表單
+            document.getElementById('student-form').reset();
+            
+            updateScore();
+            updateProgress();
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'983a342535d24a64',t:'MTc1ODYzMjIwMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
